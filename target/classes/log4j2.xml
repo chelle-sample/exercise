@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="TRACE">
+      <Properties>
+           <Property name="fileSize">10 MB</Property>
+           <Property name="numberOfFiles">10</Property>
+      </Properties>
+      <Appenders>
+            <!-- This will print logs in console -->
+      <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%-5p %d [%t] %c: %m%n" />
+      </Console>
+            <!-- This will create log files based on INFO -->
+      <RollingFile name="RollingFile_INFO"
+                 fileName="C:/Users/justine.d.mundo/Documents/technical-demo.log"
+                 filePattern="C:/Users/justine.d.mundo/Documents/technical-demo.log"> <!-- CustomapplicationName is set at mule-app.properties or in VM argument
+                  in Run As Configure as -->
+       <PatternLayout>
+              <pattern>%d %p %C{1.} [%t] %m%n</pattern>
+       </PatternLayout>
+       <Policies>
+               <SizeBasedTriggeringPolicy size="${fileSize}" /> <!-- Value taken from the <Property/> above -->
+       </Policies>
+       <DefaultRolloverStrategy max="${numberOfFiles}" />
+       </RollingFile>
+       </Appenders>
+       <Loggers>
+          <!-- CXF is used heavily by Mule for web services -->
+       <AsyncLogger name="org.apache.cxf" level="WARN" />
+       <!-- Apache Commons tend to make a lot of noise which can clutter the log -->
+       <AsyncLogger name="org.apache" level="WARN" />
+        <!-- HTTP -->
+       <AsyncLogger name="httpclient.wire" level="DEBUG" />
+       <AsyncLogger name="com.ning.http" level="DEBUG" />
+       <AsyncLogger name="org.mule.transport.http" level="DEBUG" />
+       <!-- Reduce startup noise -->
+       <AsyncLogger name="org.springframework.beans.factory" level="WARN" />
+      <!-- Mule classes -->
+       <AsyncLogger name="org.mule" level="INFO" />
+       <AsyncLogger name="com.mulesoft" level="INFO" />
+      <!-- Reduce DM verbosity -->
+      <AsyncLogger name="org.jetel" level="WARN" />
+      <AsyncLogger name="Tracking" level="WARN" />
+      <AsyncRoot>
+        <AppenderRef ref="Console" level="all" /> <!-- Console will print all the levels -->
+        <AppenderRef ref="RollingFile_ERROR" level="error" /> <!-- This will only log error in the error log files -->
+        <AppenderRef ref="RollingFile_INFO" level="info" /> <!-- This will log info in the info log files -->
+      </AsyncRoot>
+     </Loggers>
+  </Configuration>

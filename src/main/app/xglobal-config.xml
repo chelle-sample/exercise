@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:secure-property-placeholder="http://www.mulesoft.org/schema/mule/secure-property-placeholder"
+	xmlns:smtp="http://www.mulesoft.org/schema/mule/smtp" xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/smtp http://www.mulesoft.org/schema/mule/smtp/current/mule-smtp.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/secure-property-placeholder http://www.mulesoft.org/schema/mule/secure-property-placeholder/current/mule-secure-property-placeholder.xsd">
+	
+	<db:generic-config name="Generic_Database_Configuration"
+		url="jdbc:sqlserver://COHB-7322XTB-LX\SQLEXPRESS:1433;databaseName=Technical-Exercise;user=admin;password=14344"
+		driverClassName="com.microsoft.sqlserver.jdbc.SQLServerDriver"
+		doc:name="Generic Database Configuration">
+		<reconnect frequency="3000" count="5" />
+	</db:generic-config>
+
+	<validation:config name="Validation_Configuration"
+		doc:name="Validation Configuration" />
+
+</mule>

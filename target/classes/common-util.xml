@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw"
+	xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:smtp="http://www.mulesoft.org/schema/mule/smtp" xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/smtp http://www.mulesoft.org/schema/mule/smtp/current/mule-smtp.xsd">
+    <smtp:connector name="SMTP" fromAddress="you@yahoo.com" subject="Hi" validateConnections="true" doc:name="SMTP"/>
+    <smtp:gmail-connector name="Gmail" contentType="text/html" validateConnections="true" doc:name="Gmail">
+        <reconnect frequency="10000" count="6"/>
+    </smtp:gmail-connector>
+    <file:connector name="File" autoDelete="true" streaming="true" validateConnections="true" doc:name="File"/>
+    <sub-flow name="sf-validate-header">
+        <logger message="#[message.rootId + '-Header Validation']" level="INFO" doc:name="Header Validation"/>
+        <set-variable variableName="headerValue" value="#[message.inboundProperties.Authorization]" doc:name="Header Variable"/>
+        <validation:is-true config-ref="Validation_Configuration" message="Unauthorized" expression="#[flowVars.headerValue == 'basicAuthentication']" doc:name="Validate Header"/>
+    </sub-flow>
+    <sub-flow name="sf-email-message">
+        <logger message="#[message.rootId + 'Send email message']" level="INFO" doc:name="Send Email Message"/>
+        <file:outbound-endpoint path="C:\Users\Liway Gorzon\Documents\RACHEL" outputPattern="techinical-demo.log" connector-ref="File" responseTimeout="10000" doc:name="Read Log File"/>
+        <set-attachment attachmentName="techinical-demo.log" value="#[payload]" contentType="text/html" doc:name="Attach Log File"/>
+        <set-payload value="Please see the logs for more details." doc:name="Set Email Message"/>
+        <smtp:outbound-endpoint host="smtp.gmail.com" connector-ref="Gmail" responseTimeout="10000" doc:name="SMTP" from="developer.team@gmail.com" password="password" port="587" subject="Testing of Logs" to="support.team@gmail.com" user="test@gmail.com"/>
+    </sub-flow>
+</mule>

@@ -1,0 +1,135 @@
+#%RAML 1.0
+baseUri: https://anypoint.mulesoft.com/mocking/api/v1/links/26e11e78-4733-4aa6-8f1f-98762a01de4e/ # 
+version: v1
+title: User Detail
+mediaType: application/json
+
+traits:
+  commonErrorResponse:
+    responses:
+      400:
+        body:
+          example: |
+            {
+                "message": "Bad Request",
+                "code": "400"
+            }
+      401:
+        body:
+          example: |
+            {
+                "message": "Unauthorized",
+                "code": "401"
+            }
+      500:
+        body:
+          example: |
+            {
+                "message": "Internal Server Error",
+                "code": "500"
+            }
+
+types:
+  User:
+    properties:
+      username: string
+      fullname: string
+      birthday: date-only
+      gender: 
+        enum:
+          - m
+          - f
+      dateRegistered:
+        type: date-only
+        required: false
+    example:
+      username: hello123
+      fullname: Rica
+      birthday: 2019-12-27
+      gender: f
+      dateRegistered: 2019-12-27
+  Users:
+    properties:
+      Users: User[]
+
+/createUser:
+  post:
+    headers:
+      Authorization:
+        displayName: Authentication
+        type: string
+        required: true
+    body:
+      type: User
+    responses:
+      201:
+        body:
+          example: |
+            {
+                "message": "Success",
+                "code": "201"
+            }
+    is: [commonErrorResponse]
+
+
+/createUsers:
+  post:
+    headers:
+      Authorization:
+        displayName: Authentication
+        type: string
+        required: true
+    body:
+      type: Users[]
+      example: |
+        [{
+          "Users": [
+            {
+              "username": "hello123",
+              "fullname": "richard alden",
+              "birthday": "2019-08-08",
+              "gender": "m",
+              "dateRegistered": "2019-08-08"
+            },
+            {
+              "username": "hello123",
+              "fullname": "rica cruz",
+              "birthday": "2019-08-08",
+              "gender": "f",
+              "dateRegistered": "2019-08-08"
+            }
+          ]
+        }]
+    responses:
+      202:
+        body:
+          example: |
+            {
+                "message": "Success",
+                "code": "202"
+            }
+    is: [commonErrorResponse]
+
+/getUsers:
+  get:
+    headers:
+      Authorization:
+        displayName: Authentication
+        type: string
+        required: true
+    responses:
+      200:
+        body:
+          type: Users[]
+
+  /{username}:
+    get:
+      headers:
+        Authorization:
+          displayName: Authentication
+          type: string
+          required: true
+      responses:
+        200:
+          body:
+            type: User

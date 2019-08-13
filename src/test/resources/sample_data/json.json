@@ -1,0 +1,19 @@
+[
+  {
+    "Users": [
+      {
+        "username": "hello123",
+        "fullname": "richard alden",
+        "birthday": "2019-08-08",
+        "gender": "m"
+      },
+      {
+        "username": "hello123",
+        "fullname": "rica cruz",
+        "birthday": "2019-08-08",
+        "gender": "f",
+        "dateRegistered": "2019-08-08"
+      }
+    ]
+  }
+]

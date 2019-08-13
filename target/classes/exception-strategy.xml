@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+
+    <apikit:mapping-exception-strategy name="user-detail-apiKitGlobalExceptionMapping">
+        <apikit:mapping statusCode="401">
+            <apikit:exception value="org.mule.extension.validation.api.ValidationException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Set Content-Type Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Unauthorized&quot;, &quot;code&quot;: &quot;401&quot; }" doc:name="Set Unathorized Response" mimeType="application/json"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="404">
+            <apikit:exception value="org.mule.module.apikit.exception.NotFoundException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Set Content-Type Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;User Not Found&quot; code: &quot;404&quot; }" doc:name="Set User Not Found"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="400">
+            <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Set Content-Type Property"/>
+            <set-payload value="{    &quot;message&quot;: &quot;Bad Request&quot;,    &quot;code&quot;: &quot;400&quot;}" doc:name="Set Bad Request Response" mimeType="application/json"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="500">
+             <apikit:exception value="java.lang.Exception"/>
+            <apikit:exception value="java.sql.SQLException"/>
+             <set-property propertyName="Content-Type" value="application/json" doc:name="Set Content-Type Property" mimeType="application/json"/>
+            <flow-ref name="sf-generate-error-response" doc:name="sf-generate-error-response"/>
+         </apikit:mapping>
+    </apikit:mapping-exception-strategy>
+    
+</mule>

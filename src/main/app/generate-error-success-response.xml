@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
+    <sub-flow name="sf-generate-success-response">
+        <logger message="#[message.rootId + '-Generate Success Response']" level="INFO" doc:name="Generate Success Response"/>
+        <dw:transform-message doc:name="Prepare Data Response">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	"Status": "Success",
+	"Response Code": "200",
+	"Data": flowVars.userData
+}]]></dw:set-payload>
+        </dw:transform-message>
+    </sub-flow>
+    <sub-flow name="sf-generate-error-response">
+        <logger message="#[message.rootId + '-Generate Error Response']" level="INFO" doc:name="Generate ErrorResponse"/>
+        <dw:transform-message doc:name="Prepare Error Response">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	"Status": "Error",
+	"Response Code": "500",
+	"Message": "Internal Server error"
+}]]></dw:set-payload>
+        </dw:transform-message>
+    </sub-flow>
+</mule>

@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:mock="http://www.mulesoft.org/schema/mule/mock" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:spring="http://www.springframework.org/schema/beans"
+	xmlns:core="http://www.mulesoft.org/schema/mule/core" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/mock http://www.mulesoft.org/schema/mule/mock/current/mule-mock.xsd">
+	<munit:config mock-connectors="false" mock-inbounds="false"
+		doc:name="MUnit configuration" />
+	<http:request-config name="HTTP_Request_Configuration"
+		host="localhost" port="8081" basePath="/api" doc:name="HTTP Request Configuration" />
+
+	<spring:beans>
+		<spring:import resource="classpath:user-detail-api.xml" />
+		<spring:import resource="classpath:create-user-process.xml" />
+		<spring:import resource="classpath:create-multiple-user-process.xml" />
+		<spring:import resource="classpath:exception-strategy.xml" />
+		<spring:import resource="classpath:get-single-user-detail.xml" />
+		<spring:import resource="classpath:common-util.xml" />
+		<spring:import resource="classpath:xglobal-config.xml" />
+		<spring:import resource="classpath:get-multiple-users-detail.xml" />
+		<spring:import resource="classpath:generate-error-success-response.xml" />
+
+	</spring:beans>
+	<munit:test name="pr-sf-create-user-process-test-suite-positive"
+		description="Test" >
+		<mock:when messageProcessor=".*:.*" doc:name="Mock Insert Account DB">
+			<mock:with-attributes>
+				<mock:with-attribute name="doc:name"
+					whereValue="#['Insert in Account']" />
+			</mock:with-attributes>
+			<mock:then-return payload="#['1']" />
+		</mock:when>
+		<mock:when messageProcessor=".*:.*" doc:name="Mock Insert UserDetail DB">
+			<mock:with-attributes>
+				<mock:with-attribute name="doc:name"
+					whereValue="#['Insert in UserDetail']" />
+			</mock:with-attributes>
+			<mock:then-return payload="#['1']" />
+		</mock:when>
+		<munit:set payload="#[]" doc:name="Set Message">
+			<munit:inbound-properties>
+				<munit:inbound-property key="http.request"
+					value="/user/createUser" />
+				<munit:inbound-property key="Authorization"
+					value="basicAuthentication" />
+			</munit:inbound-properties>
+		</munit:set>
+		<set-payload
+			value="{
+  &quot;userId&quot;: &quot;19-001&quot;,
+  &quot;username&quot;: &quot;hello123&quot;,
+  &quot;fullname&quot;: &quot;Rica&quot;,
+  &quot;birthday&quot;: &quot;2019-12-27&quot;,
+  &quot;gender&quot;: &quot;f&quot;,
+  &quot;dateRegistered&quot;: &quot;2019-12-27&quot;
+}"
+			mimeType="application/json" doc:name="Set Request for Single User" />
+		<flow-ref name="pr-sf-create-user-process" doc:name="pr-sf-create-user-process" />
+		<munit:assert-true condition="#[payload != null]"
+			doc:name="Assert True" />
+	</munit:test>
+	<munit:test name="pr-sf-create-multiple-users-test-suite-positive"
+		description="Test" >
+		<mock:when messageProcessor=".*:.*" doc:name="Mock Insert Account DB">
+			<mock:with-attributes>
+				<mock:with-attribute name="doc:name"
+					whereValue="#['Insert in Account']" />
+			</mock:with-attributes>
+			<mock:then-return payload="#['1']" />
+		</mock:when>
+		<mock:when messageProcessor=".*:.*" doc:name="Mock Insert UserDetail DB">
+			<mock:with-attributes>
+				<mock:with-attribute name="doc:name"
+					whereValue="#['Insert in UserDetail']" />
+			</mock:with-attributes>
+			<mock:then-return payload="#['1']" />
+		</mock:when>
+		<munit:set payload="#[]" doc:name="Set Message">
+			<munit:inbound-properties>
+				<munit:inbound-property key="http.request"
+					value="/user/createUsers" />
+				<munit:inbound-property key="Authorization"
+					value="basicAuthentication" />
+			</munit:inbound-properties>
+		</munit:set>
+		<set-payload
+			value="[
+  {
+    &quot;Users&quot;: [
+      {
+        &quot;userId&quot;: &quot;1001&quot;,
+        &quot;username&quot;: &quot;hello123&quot;,
+        &quot;fullname&quot;: &quot;richard alden&quot;,
+        &quot;birthday&quot;: &quot;2019-08-08&quot;,
+        &quot;gender&quot;: &quot;m&quot;,
+        &quot;dateRegistered&quot;: &quot;2019-08-08&quot;
+      },
+      {
+        &quot;userId&quot;: &quot;1001&quot;,
+        &quot;username&quot;: &quot;hello123&quot;,
+        &quot;fullname&quot;: &quot;rica cruz&quot;,
+        &quot;birthday&quot;: &quot;2019-08-08&quot;,
+        &quot;gender&quot;: &quot;f&quot;,
+        &quot;dateRegistered&quot;: &quot;2019-08-08&quot;
+      }
+    ]
+  }
+]"
+			mimeType="application/json" doc:name="Set Request for Multiple Users" />
+		<flow-ref name="pr-sf-create-multiple-users" doc:name="pr-sf-create-multiple-users" />
+		<munit:assert-true condition="#[payload != null]"
+			doc:name="Assert True" />
+	</munit:test>
+
+	<munit:test
+		name="pr-sf-get-multiple-users-detail-process-test-suite-positive"
+		description="Test" >
+		<mock:when messageProcessor=".*:.*" doc:name="Mock Select Account DB">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="#['Select From Account Table']"/>
+            </mock:with-attributes>
+            <mock:then-return payload="#[getResource('sample_data/accountData.java')]" mimeType="application/java"/>
+		</mock:when>
+		<mock:when messageProcessor=".*:.*" doc:name="Mock Select UserDetail DB">
+			<mock:with-attributes>
+				<mock:with-attribute name="doc:name"
+					whereValue="#['Select from UserDetail']" />
+			</mock:with-attributes>
+			<mock:then-return payload="#[getResource('sample_data/userDetailData.java')]"
+				mimeType="application/java" />
+		</mock:when>
+		<munit:set payload="#[]" doc:name="Set Message">
+			<munit:invocation-properties>
+				<munit:invocation-property key="userName"
+					value="sampleUser" />
+			</munit:invocation-properties>
+			<munit:inbound-properties>
+				<munit:inbound-property key="http.request"
+					value="/user/getUser" />
+				<munit:inbound-property key="Authorization"
+					value="basicAuthentication" />
+			</munit:inbound-properties>
+		</munit:set>
+		<flow-ref name="pr-sf-get-multiple-users-detail-process"
+			doc:name="pr-sf-get-multiple-users-detail-process" />
+		<munit:assert-true condition="#[flowVars.accountData != '0']"
+			doc:name="Assert True" />
+	</munit:test>
+	<munit:test name="raml-unauhorized-test-suite-negatve"
+		description="Unauthorized Scenaro" expectException="org.mule.extension.validation.api.ValidationException" >
+		<mock:when messageProcessor=".*:.*" doc:name="Mock Insert Account DB">
+			<mock:with-attributes>
+				<mock:with-attribute name="doc:name"
+					whereValue="#['Insert in Account']" />
+			</mock:with-attributes>
+			<mock:then-return payload="#['1']" />
+		</mock:when>
+		<mock:when messageProcessor=".*:.*" doc:name="Mock Insert UserDetail DB">
+			<mock:with-attributes>
+				<mock:with-attribute name="doc:name"
+					whereValue="#['Insert in UserDetail']" />
+			</mock:with-attributes>
+			<mock:then-return payload="#['1']" />
+		</mock:when>
+		<munit:set payload="#[]" doc:name="Set Message">
+			<munit:inbound-properties>
+				<munit:inbound-property key="http.request"
+					value="/user/createUser" />
+				<munit:inbound-property key="Authorization"
+					value="basicAuth" />
+			</munit:inbound-properties>
+		</munit:set>
+		<set-payload
+			value="{   &quot;userId&quot;: &quot;19-001&quot;,   &quot;username&quot;: &quot;hello123&quot;,   &quot;fullname&quot;: &quot;Rica&quot;,   &quot;birthday&quot;: &quot;2019-12-27&quot;,   &quot;gender&quot;: &quot;f&quot;,   &quot;dateRegistered&quot;: &quot;2019-12-27&quot; }"
+			mimeType="application/json" doc:name="Set Request for Single User" />
+		<flow-ref name="pr-sf-create-user-process" doc:name="pr-sf-create-user-process" />
+		<munit:assert-true condition="#[messageInboundProperty('http.status').is(eq(401))]"
+			doc:name="assert that - http.status eq 401" message="The HTTP Status code is not correct!"/>
+	</munit:test>
+
+	<munit:test
+		name="raml-bad-request-test-suite-negative"
+		description="Bad Request Scenario" >
+		<set-payload
+			value="#[getResource('scaffolder/request/post_createuser_application_json.json').asString()]"
+			doc:name="Set Payload" />
+		<http:request config-ref="HTTP_Request_Configuration"
+			method="POST" path="user/createUser" doc:name="HTTP">
+			<http:request-builder>
+				<http:header headerName="Accept" value="application/json" />
+				<http:header headerName="Content-Type" value="application/json" />
+				<http:header headerName="Authorization" value="basicAuthentication" />
+
+			</http:request-builder>
+			<http:success-status-code-validator
+				values="400" />
+		</http:request>
+		<object-to-string-transformer doc:name="http response to string" />
+		<munit:assert-true message="The HTTP Status code is not correct!"
+			condition="#[messageInboundProperty('http.status').is(eq(400))]"
+			doc:name="assert that - http.status eq 400" />
+
+	</munit:test>
+    <munit:test name="raml-internal-server-test-suite-negative" description="Internal Server Error Test" expectException="java.sql.SQLException">
+        <munit:set payload="#[]" doc:name="Set Message">
+            <munit:invocation-properties>
+                <munit:invocation-property key="userName" value="sampleUser"/>
+            </munit:invocation-properties>
+            <munit:inbound-properties>
+                <munit:inbound-property key="http.request" value="/user/getUser"/>
+                <munit:inbound-property key="Authorization" value="basicAuthentication"/>
+            </munit:inbound-properties>
+        </munit:set>
+        <flow-ref name="sf-get-multiple-users-in-db" doc:name="sf-get-multiple-users-in-db"/>
+        <munit:assert-true message="The HTTP Status code is not correct!" condition="#[messageInboundProperty('http.status').is(eq(500))]" doc:name="assert that - http.status equal 500"/>
+    </munit:test>
+</mule>

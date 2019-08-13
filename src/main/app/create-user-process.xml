@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="pr-sf-create-user-process" processingStrategy="synchronous">
+		<flow-ref name="sf-validate-header" doc:name="sf-validate-header" />
+		<logger message="#[message.rootId + '-Start of process -Create Single Users']"
+			level="INFO" doc:name="Start of Process" />
+		<flow-ref name="sf-insert-user-details-in-db" doc:name="sf-insert-user-details-in-db" />
+		<logger message="#[message.rootId + '-End of process - Create Single User']"
+			level="INFO" doc:name="End of Process" />
+	</flow>
+	<sub-flow name="sf-insert-user-details-in-db">
+		<byte-array-to-string-transformer
+			mimeType="application/json" doc:name="Byte Array to String" />
+		<dw:transform-message doc:name="Json Request to Java DB format">
+			<dw:input-payload doc:sample="sample_data\json_1.json" />
+			<dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	username: payload.username,
+	fullName:  payload.fullname,
+	birthday:  payload.birthday as :date as :string {format:"yyyy-MM-dd"},
+	gender:  payload.gender,
+	date_registered:  payload.dateRegistered as :date as :string {format:"yyyy-MM-dd"} default "",
+	active: true when (payload.dateRegistered == null) otherwise false
+}]]></dw:set-payload>
+		</dw:transform-message>
+		<scatter-gather doc:name="Scatter-Gather">
+			<processor-chain>
+				<logger message="#[message.rootId + '-Data insert into Account table']"
+					level="INFO" doc:name="Insert into Account table" />
+                <db:insert config-ref="Generic_Database_Configuration" doc:name="Insert in Account">
+                    <db:parameterized-query><![CDATA[INSERT INTO Account (username, active, date_registered) VALUES (#[payload.username], #[payload.active], #[payload.date_registered])]]></db:parameterized-query>
+                </db:insert>
+				<logger
+					message="#[message.rootId + '-Data successfully inserted in Account table']"
+					level="INFO" doc:name="Successfully Inserted - Account Table" />
+			</processor-chain>
+			<processor-chain>
+				<logger message="#[message.rootId + '-Data insert into UserDetail table']"
+					level="INFO" doc:name="Insert into UserDetail" />
+                <db:insert config-ref="Generic_Database_Configuration" doc:name="Insert in UserDetail">
+                    <db:parameterized-query><![CDATA[INSERT INTO UserDetail (fullName, birthday, gender) VALUES (#[payload.fullName], #[payload.birthday], #[payload.gender])]]></db:parameterized-query>
+                </db:insert>
+				<logger
+					message="#[message.rootId + '-Data successfully inserted in UserDetail table']"
+					level="INFO" doc:name="Successfully Inserted - UserDetail Table" />
+			</processor-chain>
+
+		</scatter-gather>
+	</sub-flow>
+</mule>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+<flow name="pr-sf-get-single-user-detail-process" processingStrategy="synchronous">
+        <flow-ref name="sf-validate-header" doc:name="sf-validate-header"/>
+        <logger message="#[message.rootId + '-Start of process - Get Single Users']" level="INFO" doc:name="Start of Process"/>
+        <flow-ref name="sf-get-single-users-in-db" doc:name="sf-get-Single-users-in-db"/>
+        <flow-ref name="sf-transform-data-into-json-single-user" doc:name="sf-transform-data-into-json-single-user"/>
+        <flow-ref name="sf-generate-success-response" doc:name="sf-generate-success-response"/>
+        <logger message="#[message.rootId + '-End of process - Get Single Users']" level="INFO" doc:name="End of Process"/>
+    </flow>
+    <sub-flow name="sf-get-single-users-in-db">
+        <db:select config-ref="Generic_Database_Configuration" doc:name="Select From Account Table">
+            <db:dynamic-query><![CDATA[SELECT * FROM Account WHERE username='#[flowVars.username]']]></db:dynamic-query>
+        </db:select>
+        <set-variable variableName="accountData" value="#[payload]" doc:name="Account Data Variable"/>
+        <choice doc:name="Record Exist ?">
+            <when expression="#[flowVars.accountData.size() != '0']">
+                <logger message="#[message.rootId + '-Data from Account table succefully retrieve']" level="INFO" doc:name="Data Retrieve from Account"/>
+                <db:select config-ref="Generic_Database_Configuration" doc:name="Select from UserDetail">
+                    <db:parameterized-query><![CDATA[SELECT * FROM UserDetail]]></db:parameterized-query>
+                </db:select>
+                <set-variable variableName="userDetailData" value="#[payload]" doc:name="UserDetail Data Variable"/>
+                <logger message="#[message.rootId + 'Data from UserDetail table succefully retrieve']" level="INFO" doc:name="Data Retrieve from UserDetail"/>
+            </when>
+            <otherwise>
+                <logger message="#[message.rootId + 'Record Does Not Exist']" level="INFO" doc:name="Record Does Not Exist"/>
+            </otherwise>
+        </choice>
+    </sub-flow>
+    <sub-flow name="sf-transform-data-into-json-single-user">
+        <logger message="#[message.rootId + 'Transform Data - Java to Json format']" level="INFO" doc:name="Transform Data"/>
+        <dw:transform-message doc:name="Java into Json Format" metadata:id="dc5391b4-ef4b-489a-93d8-d5d3ebc85e3d">
+            <dw:input-variable  variableName="accountData"/>
+            <dw:input-variable mimeType="application/json" variableName="userDetailsJava"/>
+            <dw:set-variable variableName="userData"><![CDATA[%dw 1.0
+%output application/java
+%var userDetail =  flowVars.userDetailData
+%function getUserName(userId){
+	fullName: (userDetail filter $.userId == userId)[0].FullName,
+	dateRegistered: (userDetail filter $.userId == userId)[0].date_registered,
+	bday: (userDetail filter $.userId == userId)[0].Birthday,
+	gender: (userDetail filter $.userId == userId)[0].Gender
+}
+
+---
+flowVars.accountData map ((data, index) -> {
+	Username: data.username,
+	FullName: getUserName(data.userId).fullName,
+	Age: now.year - (getUserName(data.userId).bday).year,
+	Gender: "female" when (getUserName(data.userId).gender) == 'f' otherwise "male",
+	Status: "Active" when data.active == '1' otherwise "Inactive",
+	"Date Registered": data.date_registered
+	})
+]]></dw:set-variable>
+        </dw:transform-message>
+    </sub-flow>
+</mule>

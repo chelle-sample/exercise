@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd">
+	<http:listener-config name="user-detail-httpListenerConfig"
+		host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration" connectionIdleTimeout="60000"/>
+	<apikit:config name="user-detail-config" raml="user-detail.raml"
+		consoleEnabled="false" doc:name="Router" />
+	<flow name="user-detail-main">
+		<http:listener config-ref="user-detail-httpListenerConfig"
+			path="/api/user/*" doc:name="HTTP" />
+		<apikit:router config-ref="user-detail-config" doc:name="APIkit Router" />
+		<exception-strategy ref="user-detail-apiKitGlobalExceptionMapping"
+			doc:name="Reference Exception Strategy" />
+	</flow>
+	<flow name="user-detail-console">
+		<http:listener config-ref="user-detail-httpListenerConfig"
+			path="/console/user/*" doc:name="HTTP" />
+		<apikit:console config-ref="user-detail-config"
+			doc:name="APIkit Console" />
+	</flow>
+	<flow name="get:/getUsers:user-detail-config">
+        <flow-ref name="pr-sf-get-multiple-users-detail-process" doc:name="pr-sf-get-multiple-users-detail-process"/>
+
+	</flow>
+	<flow name="get:/getUsers/{username}:user-detail-config">
+        <flow-ref name="pr-sf-get-single-user-detail-process" doc:name="pr-sf-get-single-user-detail-process"/>
+
+	</flow>
+	<flow name="post:/createUser:application/json:user-detail-config">
+		<flow-ref name="pr-sf-create-user-process" doc:name="pr-sf-create-user-process" />
+        <set-payload value="{
+    &quot;message&quot;: &quot;Success&quot;,
+    &quot;code&quot;: &quot;201&quot;
+}" doc:name="Set Success Respone"/>
+
+	</flow>
+	<flow name="post:/createUsers:application/json:user-detail-config">
+		<flow-ref name="pr-sf-create-multiple-users" doc:name="pr-sf-create-multiple-users" />
+
+		<set-payload
+			value="{&#xA;    &quot;message&quot;: &quot;Success&quot;,&#xA;    &quot;code&quot;: &quot;202&quot;&#xA;}"
+			doc:name="Set Success Respone" />
+	</flow>
+
+</mule>
